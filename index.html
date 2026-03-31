@@ -319,7 +319,8 @@ body::after {
   // then zoom back in from ZOOM_IN_START to ZOOM_IN_END as the pattern stabilises.
   const ZOOM_START    = 7;
   const ZOOM_GENS     = 380;
-  const ZOOM_IN_START = RESTART_AT - ZOOM_GENS + 50; // starts 50 gens later; duration adapts to still complete at RESTART_AT
+  const ZOOM_IN_START  = RESTART_AT - ZOOM_GENS + 50; // starts 50 gens later; duration adapts to still complete at RESTART_AT
+  const ZOOM_IN_TARGET = 1 + (ZOOM_START - 1) * 0.6; // 40% less than full zoom (4.6 instead of 7)
   // Brief intro pause (ms) before simulation begins, to show the seed
   const INTRO_MS   = 1200;
 
@@ -338,9 +339,9 @@ body::after {
       return ZOOM_START + (1 - ZOOM_START) * (1 - Math.pow(1 - t, 4));
     }
     if (g >= ZOOM_IN_START) {
-      // Outro zoom-in: mirrors zoom-out (ease-in quartic = reverse of ease-out)
+      // Outro zoom-in: ease-in quartic (slow start, fast end), capped at ZOOM_IN_TARGET
       const t = Math.min(1, (g - ZOOM_IN_START) / (RESTART_AT - ZOOM_IN_START));
-      return 1 + (ZOOM_START - 1) * t;
+      return 1 + (ZOOM_IN_TARGET - 1) * Math.pow(t, 4);
     }
     return 1;
   }
