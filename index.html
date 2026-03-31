@@ -3,122 +3,350 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<title>rac.so</title>
+<title>rac.so — Racso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@700&family=JetBrains+Mono:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-html, body { width: 100%; height: 100%; overflow: hidden; background: #222c33; }
-canvas { display: block; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-#info {
+:root {
+  --void:      #222c33;
+  --n2:        #29333e;
+  --n3:        #313f4c;
+  --n4:        #6a8090;
+  --n5:        #ccd6e0;
+  --lava:      #f33c2c;
+  --vitellary: #f0a030;
+  --viridian:  #2a9d8f;
+  --violet:    #9966ff;
+  --vermilion: #cc2936;
+  --verdigris: #40b868;
+  --victoria:  #4466dd;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: var(--void);
+  cursor: crosshair;
+}
+
+#canvas {
+  display: block;
   position: fixed;
-  bottom: 18px;
-  right: 18px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  border: 1px solid rgba(106, 128, 144, 0.4);
-  color: rgba(106, 128, 144, 0.4);
-  font-family: monospace;
-  font-size: 11px;
+  inset: 0;
+}
+
+/* Scanline texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 7px,
+    rgba(0,0,0,0.04) 7px, rgba(0,0,0,0.04) 8px
+  );
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* Grain overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 200px 200px;
+  z-index: 41;
+}
+
+/* Bottom vignette */
+#vignette {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 280px;
+  background: linear-gradient(to top,
+    rgba(34,44,51,0.97) 0%,
+    rgba(34,44,51,0.75) 35%,
+    rgba(34,44,51,0.2)  65%,
+    transparent         100%
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Left vignette (softer) */
+#vignette-left {
+  position: fixed;
+  bottom: 0; left: 0; top: 0;
+  width: 200px;
+  background: linear-gradient(to right,
+    rgba(34,44,51,0.6) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Identity ────────────────────────────────────────── */
+#identity {
+  position: fixed;
+  bottom: 32px;
+  left: 36px;
+  z-index: 20;
+  opacity: 0;
+  animation: rise 1s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
+}
+
+#name-big {
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 700;
+  font-size: clamp(72px, 12vw, 172px);
+  line-height: 0.86;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  /* Lava → Vitellary gradient */
+  background: linear-gradient(100deg, var(--lava) 30%, var(--vitellary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  filter: drop-shadow(0 0 48px rgba(243,60,44,0.25));
+}
+
+#name-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-top: 10px;
+  padding-left: 2px;
+}
+
+#name-full {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(11px, 1vw, 15px);
+  font-weight: 300;
+  font-style: italic;
+  color: var(--n4);
+  letter-spacing: 0.18em;
+}
+
+#name-handle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(9px, 0.8vw, 12px);
+  font-weight: 300;
+  color: var(--n3);
+  letter-spacing: 0.2em;
+}
+
+/* ── Social links ────────────────────────────────────── */
+#links {
+  position: fixed;
+  bottom: 36px;
+  right: 40px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  opacity: 0;
+  animation: rise 1s cubic-bezier(0.16,1,0.3,1) 0.9s forwards;
+}
+
+#links a {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: clamp(10px, 0.85vw, 13px);
+  font-weight: 300;
+  color: var(--n4);
+  text-decoration: none;
+  letter-spacing: 0.1em;
   display: flex;
   align-items: center;
-  justify-content: center;
-  cursor: default;
-  transition: all 0.3s ease;
-  user-select: none;
+  gap: 0;
+  transition: color 0.2s ease, gap 0.2s ease;
+  position: relative;
 }
-#info:hover {
-  border-color: rgba(106, 128, 144, 0.9);
-  color: rgba(204, 214, 224, 0.9);
+
+#links a .arrow {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: width 0.2s ease, opacity 0.2s ease;
+  font-size: 0.85em;
 }
-#info .tip {
-  display: none;
-  position: absolute;
-  bottom: 30px;
-  right: 0;
-  background: #29333e;
-  color: #ccd6e0;
-  font-family: monospace;
-  font-size: 11px;
-  line-height: 1.8;
-  padding: 10px 14px;
-  border-radius: 3px;
-  white-space: nowrap;
-  border: 1px solid #313f4c;
+
+#links a:hover .arrow { width: 16px; opacity: 0.7; }
+
+#links a.gh:hover   { color: var(--n5); }
+#links a.li:hover   { color: var(--victoria); }
+#links a.tw:hover   { color: var(--viridian); }
+#links a.em:hover   { color: var(--vitellary); }
+
+/* ── Generation counter ──────────────────────────────── */
+#gen-counter {
+  position: fixed;
+  top: 24px;
+  right: 40px;
+  z-index: 20;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 300;
+  color: var(--n3);
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: rise 1s ease 1.4s forwards;
   pointer-events: none;
 }
-#info:hover .tip { display: block; }
-.tip-dim { color: #6a8090; }
+
+/* ── Info ────────────────────────────────────────────── */
+#info {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px;
+  font-weight: 300;
+  color: var(--n3);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  animation: rise 1s ease 1.6s forwards;
+  cursor: default;
+  transition: color 0.3s;
+}
+#info:hover { color: var(--n4); }
+
+/* ── Animations ──────────────────────────────────────── */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Override transform for centered #info */
+#info { animation-name: fadeIn; }
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
 </style>
 </head>
 <body>
-<canvas id="c"></canvas>
-<div id="info">?
-  <div class="tip">
-    R-pentomino &mdash; Conway's Game of Life<br>
-    5 cells &rarr; 1103 generations to stabilize<br>
-    <span class="tip-dim">click anywhere to restart</span>
+
+<canvas id="canvas"></canvas>
+<div id="vignette"></div>
+<div id="vignette-left"></div>
+
+<div id="identity">
+  <div id="name-big">Racso</div>
+  <div id="name-sub">
+    <span id="name-full">Óscar F. Gómez</span>
+    <span id="name-handle">· rac.so</span>
   </div>
 </div>
 
+<div id="links">
+  <a href="https://github.com/racso" class="gh" target="_blank" rel="noopener">
+    <span class="arrow">↗&nbsp;</span>github
+  </a>
+  <a href="https://linkedin.com/in/placeholder" class="li" target="_blank" rel="noopener">
+    <span class="arrow">↗&nbsp;</span>linkedin
+  </a>
+  <a href="https://x.com/placeholder" class="tw" target="_blank" rel="noopener">
+    <span class="arrow">↗&nbsp;</span>x · twitter
+  </a>
+  <a href="mailto:placeholder@rac.so" class="em">
+    <span class="arrow">↗&nbsp;</span>email
+  </a>
+</div>
+
+<div id="gen-counter">gen <span id="gen-val">0000</span></div>
+
+<div id="info">r-pentomino · click to restart</div>
+
 <script>
 (function () {
-  const C   = document.getElementById('c');
-  const ctx = C.getContext('2d');
+  const canvas = document.getElementById('canvas');
+  const ctx    = canvas.getContext('2d');
+  const genEl  = document.getElementById('gen-val');
 
-  // Palette
-  const VOID = [34,  44,  51 ];  // #222c33
-  const LAVA = [243, 60,  44 ];  // #f33c2c
+  // ── Palette (RGB arrays) ──────────────────────────────
+  const V = {
+    void:      [34,  44,  51 ],
+    lava:      [243, 60,  44 ],
+    vitellary: [240, 160, 48 ],
+    verdigris: [64,  184, 104],
+    viridian:  [42,  157, 143],
+    victoria:  [68,  102, 221],
+    violet:    [153, 102, 255],
+    vermilion: [204, 41,  54 ],
+  };
 
-  // R-pentomino (offset from center)
-  //  .##
-  //  ##.
-  //  .#.
+  // Age → color: cells shift through the full palette as they age
+  const AGE_MAP = [
+    [5,   V.lava     ],
+    [14,  V.vitellary],
+    [35,  V.verdigris],
+    [80,  V.viridian ],
+    [180, V.victoria ],
+    [Infinity, V.violet],
+  ];
+
+  function colorForAge(age) {
+    for (const [max, col] of AGE_MAP) if (age <= max) return col;
+    return V.violet;
+  }
+
+  // ── Config ───────────────────────────────────────────
+  const CELL       = 8;
+  const GAP        = 1;
+  const SZ         = CELL - GAP;
+  const FPS        = 20;
+  const INTERVAL   = 1000 / FPS;
+  const HEAT_DECAY = 1 / (FPS * 1.1);   // death glow ~1.1s
+  const FADE_MUL   = 0.87;
+  const RESTART_AT = 1700;
+  const THRESH     = 0.005;
+  const CORNER_R   = 1.5;               // cell corner radius
+
   const R_PENT = [[1,0],[2,0],[0,1],[1,1],[1,2]];
 
-  const CELL         = 8;
-  const FPS          = 20;
-  const HEAT_DECAY   = 1 / (FPS * 1.2); // alive glow fades over ~1.2s
-  const RESTART_AT   = 1700;             // gen threshold → start fading
-  const FADE_SPEED   = 0.88;            // heat multiplied per frame during fade
-  const FADE_THRESH  = 0.004;           // consider "off" below this
-
   let cols, rows, W, H;
-  let cells, heat;
-  let gen = 0;
-  let fading = false;
-  let last = 0;
-  const interval = 1000 / FPS;
+  let cells, ages, heat;
+  let gen = 0, fading = false, last = 0;
 
-  // ── Setup ────────────────────────────────────────────────────────────────
-
+  // ── Init ──────────────────────────────────────────────
   function resize() {
-    W = C.width  = window.innerWidth;
-    H = C.height = window.innerHeight;
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
     cols = Math.floor(W / CELL);
     rows = Math.floor(H / CELL);
     cells = new Uint8Array(cols * rows);
+    ages  = new Uint16Array(cols * rows);
     heat  = new Float32Array(cols * rows);
-    gen   = 0;
-    fading = false;
+    gen = 0; fading = false;
     seed();
   }
 
   function seed() {
-    cells.fill(0);
-    heat.fill(0);
-    gen = 0;
-    fading = false;
+    cells.fill(0); ages.fill(0); heat.fill(0);
+    gen = 0; fading = false;
     const cx = Math.floor(cols / 2) - 1;
     const cy = Math.floor(rows / 2) - 1;
     for (const [dx, dy] of R_PENT) {
       const i = (cy + dy) * cols + (cx + dx);
-      if (i >= 0 && i < cells.length) { cells[i] = 1; heat[i] = 1; }
+      if (i >= 0 && i < cells.length) {
+        cells[i] = 1; ages[i] = 1; heat[i] = 1;
+      }
     }
   }
 
-  // ── Simulation ───────────────────────────────────────────────────────────
-
+  // ── Simulation ────────────────────────────────────────
   function step() {
     const next = new Uint8Array(cols * rows);
     for (let y = 0; y < rows; y++) {
@@ -127,76 +355,89 @@ canvas { display: block; }
         for (let dy = -1; dy <= 1; dy++)
           for (let dx = -1; dx <= 1; dx++) {
             if (!dx && !dy) continue;
-            n += cells[((y + dy + rows) % rows) * cols + ((x + dx + cols) % cols)];
+            n += cells[((y+dy+rows)%rows)*cols+((x+dx+cols)%cols)];
           }
-        const alive = cells[y * cols + x];
-        next[y * cols + x] = alive ? (n === 2 || n === 3 ? 1 : 0) : (n === 3 ? 1 : 0);
+        const alive = cells[y*cols+x];
+        next[y*cols+x] = alive ? (n===2||n===3?1:0) : (n===3?1:0);
       }
     }
     for (let i = 0; i < cells.length; i++) {
-      if (next[i])   heat[i] = 1;
-      else           heat[i] = Math.max(0, heat[i] - HEAT_DECAY);
+      if (next[i]) {
+        ages[i] = Math.min(ages[i] + 1, 500);
+        heat[i] = 1;
+      } else {
+        heat[i] = Math.max(0, heat[i] - HEAT_DECAY);
+        if (heat[i] < THRESH) { heat[i] = 0; ages[i] = 0; }
+      }
     }
     cells = next;
     gen++;
   }
 
-  function fadeOut() {
+  function fadeStep() {
     let anyHot = false;
     for (let i = 0; i < heat.length; i++) {
-      heat[i] *= FADE_SPEED;
-      if (heat[i] > FADE_THRESH) anyHot = true;
-      else heat[i] = 0;
+      heat[i] *= FADE_MUL;
+      if (heat[i] < THRESH) { heat[i] = 0; ages[i] = 0; }
+      else anyHot = true;
     }
     return anyHot;
   }
 
-  // ── Rendering ────────────────────────────────────────────────────────────
+  // ── Rendering ─────────────────────────────────────────
+  function lerp3(a, b, t) {
+    return [(a[0]+(b[0]-a[0])*t)|0, (a[1]+(b[1]-a[1])*t)|0, (a[2]+(b[2]-a[2])*t)|0];
+  }
 
   function draw() {
-    // Background
     ctx.fillStyle = '#222c33';
     ctx.fillRect(0, 0, W, H);
 
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < cols; x++) {
-        const h = heat[y * cols + x];
-        if (h < FADE_THRESH) continue;
+        const i = y*cols+x;
+        const h = heat[i];
+        if (h < THRESH) continue;
 
-        // Square curve: alive cells stay bright, dead ones fall off fast
-        const t = cells[y * cols + x] ? h : h * h;
-        const r = VOID[0] + (LAVA[0] - VOID[0]) * t | 0;
-        const g = VOID[1] + (LAVA[1] - VOID[1]) * t | 0;
-        const b = VOID[2] + (LAVA[2] - VOID[2]) * t | 0;
+        let col;
+        if (cells[i]) {
+          col = colorForAge(ages[i]);
+        } else {
+          // Dying: vermilion ember fading to void
+          col = lerp3(V.void, V.vermilion, h * h * 1.4);
+        }
 
-        ctx.fillStyle = `rgb(${r},${g},${b})`;
-        ctx.fillRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2);
+        ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
+
+        // Rounded-corner cells
+        const px = x*CELL+GAP, py = y*CELL+GAP;
+        ctx.beginPath();
+        ctx.roundRect(px, py, SZ, SZ, CORNER_R);
+        ctx.fill();
       }
     }
   }
 
-  // ── Loop ─────────────────────────────────────────────────────────────────
-
+  // ── Loop ─────────────────────────────────────────────
   function loop(ts) {
     requestAnimationFrame(loop);
-    if (ts - last < interval) return;
+    if (ts - last < INTERVAL) return;
     last = ts;
 
     if (!fading) {
       step();
       draw();
+      genEl.textContent = String(gen).padStart(4, '0');
       if (gen >= RESTART_AT) fading = true;
     } else {
-      const anyHot = fadeOut();
-      draw();
-      if (!anyHot) seed();
+      if (fadeStep()) draw();
+      else seed();
     }
   }
 
-  // ── Events ───────────────────────────────────────────────────────────────
-
-  C.addEventListener('click', seed);
-  window.addEventListener('resize', resize);
+  // ── Events ───────────────────────────────────────────
+  canvas.addEventListener('click', seed);
+  window.addEventListener('resize', () => { resize(); });
 
   resize();
   requestAnimationFrame(loop);
