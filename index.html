@@ -103,9 +103,10 @@ body::after {
   font-size: clamp(72px, 12vw, 172px);
   line-height: 0.86;
   letter-spacing: -0.01em;
+  margin-left: -0.05em;
   text-transform: uppercase;
   /* Initial state — JS updates this dynamically each generation */
-  background: linear-gradient(105deg, #f33c2c 70%, #f33c2c 100%);
+  background: linear-gradient(45deg, #f33c2c 70%, #f33c2c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -318,7 +319,7 @@ body::after {
   // then zoom back in from ZOOM_IN_START to ZOOM_IN_END as the pattern stabilises.
   const ZOOM_START    = 7;
   const ZOOM_GENS     = 380;
-  const ZOOM_IN_START = RESTART_AT - ZOOM_GENS; // mirror of zoom-out: same 380-gen duration
+  const ZOOM_IN_START = RESTART_AT - ZOOM_GENS + 50; // starts 50 gens later; duration adapts to still complete at RESTART_AT
   // Brief intro pause (ms) before simulation begins, to show the seed
   const INTRO_MS   = 1200;
 
@@ -338,8 +339,8 @@ body::after {
     }
     if (g >= ZOOM_IN_START) {
       // Outro zoom-in: mirrors zoom-out (ease-in quartic = reverse of ease-out)
-      const t = Math.min(1, (g - ZOOM_IN_START) / ZOOM_GENS);
-      return 1 + (ZOOM_START - 1) * Math.pow(t, 4);
+      const t = Math.min(1, (g - ZOOM_IN_START) / (RESTART_AT - ZOOM_IN_START));
+      return 1 + (ZOOM_START - 1) * t;
     }
     return 1;
   }
@@ -507,7 +508,7 @@ body::after {
   function updateNameGradient() {
     const [r, g, b] = globalColor(gen);
     nameBig.style.backgroundImage =
-      `linear-gradient(105deg, #f33c2c 70%, rgb(${r},${g},${b}) 100%)`;
+      `linear-gradient(45deg, #f33c2c 70%, rgb(${r},${g},${b}) 100%)`;
   }
 
   // ── Milestone glow ────────────────────────────────────
@@ -555,7 +556,6 @@ body::after {
   }
 
   // ── Events ──────────────────────────────────────────
-  canvas.addEventListener('click', seed);
   window.addEventListener('resize', resize);
 
   buildFavicon();
