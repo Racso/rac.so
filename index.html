@@ -334,12 +334,13 @@ body::after {
   // travel room before reaching a dead border (no wrapping).
   const MARGIN     = 20;
 
-  // Zoom config: start zoomed in, pull back to 1× over ZOOM_GENS generations,
-  // then zoom back in from ZOOM_IN_START to ZOOM_IN_END as the pattern stabilises.
-  const ZOOM_START    = 7;
-  const ZOOM_GENS     = 380;
-  const ZOOM_IN_START = 900;
-  const ZOOM_IN_END   = 1003;
+  // Zoom config: hold at max zoom until ZOOM_OUT_START, then slowly pull back to 1×
+  // by ZOOM_OUT_END, then zoom back in from ZOOM_IN_START to ZOOM_IN_END.
+  const ZOOM_START     = 7;
+  const ZOOM_OUT_START = 50;
+  const ZOOM_OUT_END   = 750;
+  const ZOOM_IN_START  = 900;
+  const ZOOM_IN_END    = 1003;
   // Brief intro pause (ms) before simulation begins, to show the seed
   const INTRO_MS   = 1200;
 
@@ -352,9 +353,9 @@ body::after {
 
   // ── Zoom ────────────────────────────────────────────
   function getScale(g) {
-    if (g < ZOOM_GENS) {
-      // Intro zoom-out: gens 0 → ZOOM_GENS
-      const t = g / ZOOM_GENS;
+    if (g < ZOOM_OUT_END) {
+      // Intro zoom-out: hold at ZOOM_START until ZOOM_OUT_START, then ease to 1×
+      const t = Math.max(0, (g - ZOOM_OUT_START) / (ZOOM_OUT_END - ZOOM_OUT_START));
       return ZOOM_START + (1 - ZOOM_START) * (1 - Math.pow(1 - t, 4));
     }
     if (g >= ZOOM_IN_START) {
