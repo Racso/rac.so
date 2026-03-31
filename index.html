@@ -215,25 +215,6 @@ body::after {
   text-shadow: 0 0 8px rgba(243,60,44,0.4);
 }
 
-/* ── Info ──────────────────────────────────────────── */
-#info {
-  position: fixed;
-  bottom: 16px; left: 50%;
-  transform: translateX(-50%);
-  z-index: 20;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 300;
-  color: var(--n3);
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  opacity: 0;
-  animation: fadeIn 1s ease 1.5s forwards;
-  cursor: default;
-  transition: color 0.3s;
-}
-#info:hover { color: var(--n4); }
 
 /* ── Keyframes ─────────────────────────────────────── */
 @keyframes rise {
@@ -256,7 +237,7 @@ body::after {
   <div id="name-big">Racso</div>
   <div id="name-sub">
     <span id="name-full">Óscar F. Gómez</span>
-    <span id="name-handle">· rac.so</span>
+    <span id="name-handle">· https://rac.so</span>
   </div>
 </div>
 
@@ -272,7 +253,6 @@ body::after {
 <div id="gen-counter">gen <span id="gen-val">0000</span></div>
 <div id="ff-btn">×4</div>
 
-<div id="info">r-pentomino · click to restart</div>
 
 <script>
 (function () {
