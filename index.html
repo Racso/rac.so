@@ -187,15 +187,8 @@ body::after {
   pointer-events: none;
 }
 
-#gen-counter.milestone-live {
-  animation: milestone-flash 1s ease forwards;
-}
-
-@keyframes milestone-flash {
-  0%   { color: var(--n5); text-shadow: none; }
-  20%  { color: var(--lava); text-shadow: 0 0 10px rgba(243,60,44,1), 0 0 30px rgba(243,60,44,0.5), 0 0 60px rgba(243,60,44,0.2); }
-  100% { color: var(--n5); text-shadow: none; }
-}
+/* Milestone glow is driven by JS inline styles + this transition */
+#gen-counter { transition: color 0.7s ease, text-shadow 0.7s ease; }
 
 /* ── Info ──────────────────────────────────────────── */
 #info {
@@ -274,18 +267,15 @@ body::after {
     vermilion: [204, 41,  54 ],
   };
 
-  const AGE_MAP = [
-    [5,        V.lava     ],
-    [14,       V.vitellary],
-    [35,       V.verdigris],
-    [80,       V.viridian ],
-    [180,      V.victoria ],
-    [Infinity, V.violet   ],
-  ];
-
-  function colorForAge(age) {
-    for (const [max, col] of AGE_MAP) if (age <= max) return col;
-    return V.violet;
+  // Global cell color — all alive cells share one color that shifts with generations
+  // Gen 1→25: lava→vermilion, 25→100: vermilion→vitellary, then continues through palette
+  function globalColor(g) {
+    if (g <= 25)   return lerp3(V.lava,      V.vermilion, (g - 1)   / 24);
+    if (g <= 100)  return lerp3(V.vermilion, V.vitellary, (g - 25)  / 75);
+    if (g <= 350)  return lerp3(V.vitellary, V.verdigris, (g - 100) / 250);
+    if (g <= 700)  return lerp3(V.verdigris, V.viridian,  (g - 350) / 350);
+    if (g <= 1100) return lerp3(V.viridian,  V.victoria,  (g - 700) / 400);
+    return lerp3(V.victoria, V.violet, Math.min(1, (g - 1100) / 400));
   }
 
   function lerp3(a, b, t) {
@@ -313,7 +303,7 @@ body::after {
   const R_PENT = [[1,0],[2,0],[0,1],[1,1],[1,2]];
 
   let cols, rows, W, H;
-  let cells, ages, heat;
+  let cells, heat;
   let gen = 0, fading = false, last = 0;
   let intro = true, introStart = 0;
 
@@ -332,14 +322,13 @@ body::after {
     cols = Math.floor(W / CELL);
     rows = Math.floor(H / CELL);
     cells = new Uint8Array(cols * rows);
-    ages  = new Uint16Array(cols * rows);
     heat  = new Float32Array(cols * rows);
     gen = 0; fading = false;
     seed();
   }
 
   function seed() {
-    cells.fill(0); ages.fill(0); heat.fill(0);
+    cells.fill(0); heat.fill(0);
     gen = 0; fading = false; intro = true; introStart = performance.now();
     const cx = Math.floor(cols / 2) - 1;
     const cy = Math.floor(rows / 2) - 1;
@@ -368,11 +357,10 @@ body::after {
     }
     for (let i = 0; i < cells.length; i++) {
       if (next[i]) {
-        ages[i] = Math.min(ages[i] + 1, 500);
         heat[i] = 1;
       } else {
         heat[i] = Math.max(0, heat[i] - HEAT_DECAY);
-        if (heat[i] < THRESH) { heat[i] = 0; ages[i] = 0; }
+        if (heat[i] < THRESH) heat[i] = 0;
       }
     }
     cells = next;
@@ -383,7 +371,7 @@ body::after {
     let anyHot = false;
     for (let i = 0; i < heat.length; i++) {
       heat[i] *= FADE_MUL;
-      if (heat[i] < THRESH) { heat[i] = 0; ages[i] = 0; }
+      if (heat[i] < THRESH) heat[i] = 0;
       else anyHot = true;
     }
     return anyHot;
@@ -419,9 +407,10 @@ body::after {
         const h = heat[i];
         if (h < THRESH) continue;
 
-        const col = cells[i]
-          ? colorForAge(ages[i])
-          : lerp3(V.void, V.vermilion, h * h * 1.4);
+        const base = globalColor(gen);
+        const col  = cells[i]
+          ? base
+          : lerp3(V.void, base, h * h * 1.2);
 
         ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
         ctx.beginPath();
@@ -463,12 +452,18 @@ body::after {
     drawCells(scale, glow);
   }
 
-  // ── Milestone ───────────────────────────────────────
+  // ── Milestone glow ────────────────────────────────────
+  // Snap to lava instantly, then let CSS transition fade it back to --n5
   function flashMilestone() {
-    genCtr.classList.remove('milestone-live');
-    void genCtr.offsetWidth; // reflow to restart animation
-    genCtr.classList.add('milestone-live');
-    setTimeout(() => genCtr.classList.remove('milestone-live'), 1000);
+    genCtr.style.transition = 'none';
+    genCtr.style.color = '#f33c2c';
+    genCtr.style.textShadow = '0 0 10px rgba(243,60,44,1), 0 0 28px rgba(243,60,44,0.5), 0 0 56px rgba(243,60,44,0.2)';
+    void genCtr.offsetWidth; // flush
+    genCtr.style.transition = ''; // re-enable CSS transition
+    setTimeout(() => {
+      genCtr.style.color = '';
+      genCtr.style.textShadow = '';
+    }, 350);
   }
 
   // ── Loop ────────────────────────────────────────────
