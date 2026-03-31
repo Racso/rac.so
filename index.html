@@ -293,6 +293,9 @@ body::after {
   const RESTART_AT = 1700;
   const THRESH     = 0.005;
   const CORNER_R   = 1.5;
+  // Extra cells beyond the viewport on every side — gives gliders ~800 gens of
+  // travel room before reaching a dead border (no wrapping).
+  const MARGIN     = 200;
 
   // Zoom config: start zoomed in, pull back to 1× over ZOOM_GENS generations
   const ZOOM_START = 7;
@@ -302,7 +305,7 @@ body::after {
 
   const R_PENT = [[1,0],[2,0],[0,1],[1,1],[1,2]];
 
-  let cols, rows, W, H;
+  let cols, rows, extCols, extRows, W, H;
   let cells, heat;
   let gen = 0, fading = false, last = 0;
   let intro = true, introStart = 0;
@@ -319,10 +322,12 @@ body::after {
   function resize() {
     W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
-    cols = Math.floor(W / CELL);
-    rows = Math.floor(H / CELL);
-    cells = new Uint8Array(cols * rows);
-    heat  = new Float32Array(cols * rows);
+    cols    = Math.floor(W / CELL);
+    rows    = Math.floor(H / CELL);
+    extCols = cols + 2 * MARGIN;
+    extRows = rows + 2 * MARGIN;
+    cells = new Uint8Array(extCols * extRows);
+    heat  = new Float32Array(extCols * extRows);
     gen = 0; fading = false;
     seed();
   }
@@ -330,10 +335,10 @@ body::after {
   function seed() {
     cells.fill(0); heat.fill(0);
     gen = 0; fading = false; intro = true; introStart = performance.now();
-    const cx = Math.floor(cols / 2) - 1;
-    const cy = Math.floor(rows / 2) - 1;
+    const cx = Math.floor(extCols / 2) - 1;
+    const cy = Math.floor(extRows / 2) - 1;
     for (const [dx, dy] of R_PENT) {
-      const i = (cy + dy) * cols + (cx + dx);
+      const i = (cy + dy) * extCols + (cx + dx);
       if (i >= 0 && i < cells.length) {
         cells[i] = 1; heat[i] = 1;
       }
@@ -342,17 +347,20 @@ body::after {
 
   // ── Simulation ──────────────────────────────────────
   function step() {
-    const next = new Uint8Array(cols * rows);
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
+    const next = new Uint8Array(extCols * extRows);
+    for (let y = 0; y < extRows; y++) {
+      for (let x = 0; x < extCols; x++) {
         let n = 0;
         for (let dy = -1; dy <= 1; dy++)
           for (let dx = -1; dx <= 1; dx++) {
             if (!dx && !dy) continue;
-            n += cells[((y+dy+rows)%rows)*cols+((x+dx+cols)%cols)];
+            const nx = x + dx, ny = y + dy;
+            // Fixed border: cells outside the grid are permanently dead
+            if (nx >= 0 && nx < extCols && ny >= 0 && ny < extRows)
+              n += cells[ny * extCols + nx];
           }
-        const alive = cells[y*cols+x];
-        next[y*cols+x] = alive ? (n===2||n===3?1:0) : (n===3?1:0);
+        const alive = cells[y * extCols + x];
+        next[y * extCols + x] = alive ? (n===2||n===3?1:0) : (n===3?1:0);
       }
     }
     for (let i = 0; i < cells.length; i++) {
@@ -379,17 +387,17 @@ body::after {
 
   // ── Rendering ───────────────────────────────────────
   function drawCells(scale, glowStrength) {
-    // Grid center in canvas coords (the zoom anchor)
-    const cxGrid = cols / 2 * CELL;
-    const cyGrid = rows / 2 * CELL;
+    // Zoom anchor = centre of extended grid (which is where the R-pentomino lives)
+    const cxGrid = extCols / 2 * CELL;
+    const cyGrid = extRows / 2 * CELL;
 
     // Viewport culling: only draw cells visible at current scale
     const halfW  = (W / 2) / scale;
     const halfH  = (H / 2) / scale;
-    const minX   = Math.max(0,      Math.floor((cxGrid - halfW) / CELL) - 1);
-    const maxX   = Math.min(cols-1, Math.ceil ((cxGrid + halfW) / CELL) + 1);
-    const minY   = Math.max(0,      Math.floor((cyGrid - halfH) / CELL) - 1);
-    const maxY   = Math.min(rows-1, Math.ceil ((cyGrid + halfH) / CELL) + 1);
+    const minX   = Math.max(0,         Math.floor((cxGrid - halfW) / CELL) - 1);
+    const maxX   = Math.min(extCols-1, Math.ceil ((cxGrid + halfW) / CELL) + 1);
+    const minY   = Math.max(0,         Math.floor((cyGrid - halfH) / CELL) - 1);
+    const maxY   = Math.min(extRows-1, Math.ceil ((cyGrid + halfH) / CELL) + 1);
 
     ctx.save();
     ctx.translate(W / 2, H / 2);
@@ -403,7 +411,7 @@ body::after {
 
     for (let y = minY; y <= maxY; y++) {
       for (let x = minX; x <= maxX; x++) {
-        const i = y * cols + x;
+        const i = y * extCols + x;
         const h = heat[i];
         if (h < THRESH) continue;
 
