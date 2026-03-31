@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>rac.so</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #222c33; }
+canvas { display: block; }
+
+#info {
+  position: fixed;
+  bottom: 18px;
+  right: 18px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(106, 128, 144, 0.4);
+  color: rgba(106, 128, 144, 0.4);
+  font-family: monospace;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  transition: all 0.3s ease;
+  user-select: none;
+}
+#info:hover {
+  border-color: rgba(106, 128, 144, 0.9);
+  color: rgba(204, 214, 224, 0.9);
+}
+#info .tip {
+  display: none;
+  position: absolute;
+  bottom: 30px;
+  right: 0;
+  background: #29333e;
+  color: #ccd6e0;
+  font-family: monospace;
+  font-size: 11px;
+  line-height: 1.8;
+  padding: 10px 14px;
+  border-radius: 3px;
+  white-space: nowrap;
+  border: 1px solid #313f4c;
+  pointer-events: none;
+}
+#info:hover .tip { display: block; }
+.tip-dim { color: #6a8090; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="info">?
+  <div class="tip">
+    R-pentomino &mdash; Conway's Game of Life<br>
+    5 cells &rarr; 1103 generations to stabilize<br>
+    <span class="tip-dim">click anywhere to restart</span>
+  </div>
+</div>
+
+<script>
+(function () {
+  const C   = document.getElementById('c');
+  const ctx = C.getContext('2d');
+
+  // Palette
+  const VOID = [34,  44,  51 ];  // #222c33
+  const LAVA = [243, 60,  44 ];  // #f33c2c
+
+  // R-pentomino (offset from center)
+  //  .##
+  //  ##.
+  //  .#.
+  const R_PENT = [[1,0],[2,0],[0,1],[1,1],[1,2]];
+
+  const CELL         = 8;
+  const FPS          = 20;
+  const HEAT_DECAY   = 1 / (FPS * 1.2); // alive glow fades over ~1.2s
+  const RESTART_AT   = 1700;             // gen threshold → start fading
+  const FADE_SPEED   = 0.88;            // heat multiplied per frame during fade
+  const FADE_THRESH  = 0.004;           // consider "off" below this
+
+  let cols, rows, W, H;
+  let cells, heat;
+  let gen = 0;
+  let fading = false;
+  let last = 0;
+  const interval = 1000 / FPS;
+
+  // ── Setup ────────────────────────────────────────────────────────────────
+
+  function resize() {
+    W = C.width  = window.innerWidth;
+    H = C.height = window.innerHeight;
+    cols = Math.floor(W / CELL);
+    rows = Math.floor(H / CELL);
+    cells = new Uint8Array(cols * rows);
+    heat  = new Float32Array(cols * rows);
+    gen   = 0;
+    fading = false;
+    seed();
+  }
+
+  function seed() {
+    cells.fill(0);
+    heat.fill(0);
+    gen = 0;
+    fading = false;
+    const cx = Math.floor(cols / 2) - 1;
+    const cy = Math.floor(rows / 2) - 1;
+    for (const [dx, dy] of R_PENT) {
+      const i = (cy + dy) * cols + (cx + dx);
+      if (i >= 0 && i < cells.length) { cells[i] = 1; heat[i] = 1; }
+    }
+  }
+
+  // ── Simulation ───────────────────────────────────────────────────────────
+
+  function step() {
+    const next = new Uint8Array(cols * rows);
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        let n = 0;
+        for (let dy = -1; dy <= 1; dy++)
+          for (let dx = -1; dx <= 1; dx++) {
+            if (!dx && !dy) continue;
+            n += cells[((y + dy + rows) % rows) * cols + ((x + dx + cols) % cols)];
+          }
+        const alive = cells[y * cols + x];
+        next[y * cols + x] = alive ? (n === 2 || n === 3 ? 1 : 0) : (n === 3 ? 1 : 0);
+      }
+    }
+    for (let i = 0; i < cells.length; i++) {
+      if (next[i])   heat[i] = 1;
+      else           heat[i] = Math.max(0, heat[i] - HEAT_DECAY);
+    }
+    cells = next;
+    gen++;
+  }
+
+  function fadeOut() {
+    let anyHot = false;
+    for (let i = 0; i < heat.length; i++) {
+      heat[i] *= FADE_SPEED;
+      if (heat[i] > FADE_THRESH) anyHot = true;
+      else heat[i] = 0;
+    }
+    return anyHot;
+  }
+
+  // ── Rendering ────────────────────────────────────────────────────────────
+
+  function draw() {
+    // Background
+    ctx.fillStyle = '#222c33';
+    ctx.fillRect(0, 0, W, H);
+
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < cols; x++) {
+        const h = heat[y * cols + x];
+        if (h < FADE_THRESH) continue;
+
+        // Square curve: alive cells stay bright, dead ones fall off fast
+        const t = cells[y * cols + x] ? h : h * h;
+        const r = VOID[0] + (LAVA[0] - VOID[0]) * t | 0;
+        const g = VOID[1] + (LAVA[1] - VOID[1]) * t | 0;
+        const b = VOID[2] + (LAVA[2] - VOID[2]) * t | 0;
+
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(x * CELL + 1, y * CELL + 1, CELL - 2, CELL - 2);
+      }
+    }
+  }
+
+  // ── Loop ─────────────────────────────────────────────────────────────────
+
+  function loop(ts) {
+    requestAnimationFrame(loop);
+    if (ts - last < interval) return;
+    last = ts;
+
+    if (!fading) {
+      step();
+      draw();
+      if (gen >= RESTART_AT) fading = true;
+    } else {
+      const anyHot = fadeOut();
+      draw();
+      if (!anyHot) seed();
+    }
+  }
+
+  // ── Events ───────────────────────────────────────────────────────────────
+
+  C.addEventListener('click', seed);
+  window.addEventListener('resize', resize);
+
+  resize();
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
