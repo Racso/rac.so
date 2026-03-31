@@ -277,7 +277,7 @@ body::after {
   const COLOR_WHEEL = [V.lava, V.vitellary, V.verdigris, V.viridian, V.victoria, V.violet, V.vermilion];
 
   function globalColor(g) {
-    const t   = ((g - 1) % 700) / 100; // 0 → 6.99 per cycle
+    const t   = (((g - 1) % 700) + 700) % 700 / 100; // 0 → 6.99, safe for g=0
     const idx = Math.floor(t);
     return lerp3(COLOR_WHEEL[idx], COLOR_WHEEL[(idx + 1) % COLOR_WHEEL.length], t - idx);
   }
