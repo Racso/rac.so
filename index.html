@@ -271,14 +271,15 @@ body::after {
     vermilion: [204, 41,  54 ],
   };
 
-  // Global cell color — all alive cells share one color that shifts with generations
-  // Gen 1→25: lava→vermilion, 25→100: vermilion→vitellary, then continues through palette
-  // Colours in hue-wheel order (clockwise); loops every 700 gens
-  // Lava appears twice so it stays pure for gens 1–100, then transitions from gen 101
-  const COLOR_WHEEL = [V.lava, V.lava, V.vitellary, V.verdigris, V.viridian, V.victoria, V.violet, V.vermilion];
+  // Global cell color — all alive cells share one colour that shifts with generations.
+  // 7 colours in hue-wheel order (clockwise); distributed evenly across gens 1–1103 so
+  // exactly one full rotation occurs as the R-pentomino stabilises.
+  // Gen 1 = Lava, gen 1103 = Lava again (cycle = 1102 steps).
+  const COLOR_WHEEL = [V.lava, V.vitellary, V.verdigris, V.viridian, V.victoria, V.violet, V.vermilion];
+  const COLOR_CYCLE = 1102; // 1103 - 1
 
   function globalColor(g) {
-    const t   = (((g - 1) % 800) + 800) % 800 / 100; // 0 → 7.99 per cycle
+    const t   = (((g - 1) % COLOR_CYCLE) + COLOR_CYCLE) % COLOR_CYCLE / COLOR_CYCLE * 7;
     const idx = Math.floor(t);
     return lerp3(COLOR_WHEEL[idx], COLOR_WHEEL[(idx + 1) % COLOR_WHEEL.length], t - idx);
   }
@@ -295,16 +296,19 @@ body::after {
   const INTERVAL   = 1000 / FPS;
   const HEAT_DECAY = 1 / (FPS * 1.1);
   const FADE_MUL   = 0.87;
-  const RESTART_AT = 1600; // 2 full colour-wheel cycles (800 gens each)
+  const RESTART_AT = 1103; // R-pentomino stabilises at gen 1103
   const THRESH     = 0.005;
   const CORNER_R   = 1.5;
   // Extra cells beyond the viewport on every side — gives gliders ~800 gens of
   // travel room before reaching a dead border (no wrapping).
   const MARGIN     = 20;
 
-  // Zoom config: start zoomed in, pull back to 1× over ZOOM_GENS generations
-  const ZOOM_START = 7;
-  const ZOOM_GENS  = 380;
+  // Zoom config: start zoomed in, pull back to 1× over ZOOM_GENS generations,
+  // then zoom back in from ZOOM_IN_START to ZOOM_IN_END as the pattern stabilises.
+  const ZOOM_START    = 7;
+  const ZOOM_GENS     = 380;
+  const ZOOM_IN_START = 900;
+  const ZOOM_IN_END   = 1003;
   // Brief intro pause (ms) before simulation begins, to show the seed
   const INTRO_MS   = 1200;
 
@@ -317,10 +321,17 @@ body::after {
 
   // ── Zoom ────────────────────────────────────────────
   function getScale(g) {
-    if (g >= ZOOM_GENS) return 1;
-    const t    = g / ZOOM_GENS;
-    const ease = 1 - Math.pow(1 - t, 4); // ease-out quartic
-    return ZOOM_START + (1 - ZOOM_START) * ease;
+    if (g < ZOOM_GENS) {
+      // Intro zoom-out: gens 0 → ZOOM_GENS
+      const t = g / ZOOM_GENS;
+      return ZOOM_START + (1 - ZOOM_START) * (1 - Math.pow(1 - t, 4));
+    }
+    if (g >= ZOOM_IN_START) {
+      // Outro zoom-in: gens ZOOM_IN_START → ZOOM_IN_END
+      const t = Math.min(1, (g - ZOOM_IN_START) / (ZOOM_IN_END - ZOOM_IN_START));
+      return 1 + (ZOOM_START - 1) * (1 - Math.pow(1 - t, 4));
+    }
+    return 1;
   }
 
   // ── Setup ───────────────────────────────────────────
