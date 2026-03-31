@@ -270,12 +270,12 @@ body::after {
   // Global cell color — all alive cells share one color that shifts with generations
   // Gen 1→25: lava→vermilion, 25→100: vermilion→vitellary, then continues through palette
   function globalColor(g) {
-    if (g <= 25)   return lerp3(V.lava,      V.vermilion, (g - 1)   / 24);
-    if (g <= 100)  return lerp3(V.vermilion, V.vitellary, (g - 25)  / 75);
-    if (g <= 350)  return lerp3(V.vitellary, V.verdigris, (g - 100) / 250);
-    if (g <= 700)  return lerp3(V.verdigris, V.viridian,  (g - 350) / 350);
-    if (g <= 1100) return lerp3(V.viridian,  V.victoria,  (g - 700) / 400);
-    return lerp3(V.victoria, V.violet, Math.min(1, (g - 1100) / 400));
+    if (g <= 100)  return lerp3(V.lava,      V.vermilion, (g - 1)   / 99);
+    if (g <= 300)  return lerp3(V.vermilion, V.vitellary, (g - 100) / 200);
+    if (g <= 600)  return lerp3(V.vitellary, V.verdigris, (g - 300) / 300);
+    if (g <= 1000) return lerp3(V.verdigris, V.viridian,  (g - 600) / 400);
+    if (g <= 1400) return lerp3(V.viridian,  V.victoria,  (g - 1000) / 400);
+    return lerp3(V.victoria, V.violet, Math.min(1, (g - 1400) / 300));
   }
 
   function lerp3(a, b, t) {
@@ -295,7 +295,7 @@ body::after {
   const CORNER_R   = 1.5;
   // Extra cells beyond the viewport on every side — gives gliders ~800 gens of
   // travel room before reaching a dead border (no wrapping).
-  const MARGIN     = 200;
+  const MARGIN     = 20;
 
   // Zoom config: start zoomed in, pull back to 1× over ZOOM_GENS generations
   const ZOOM_START = 7;
