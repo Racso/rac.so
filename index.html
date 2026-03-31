@@ -38,7 +38,7 @@ html, body {
   inset: 0;
 }
 
-/* Scanline texture */
+/* Scanlines */
 body::before {
   content: '';
   position: fixed; inset: 0;
@@ -51,7 +51,7 @@ body::before {
   z-index: 40;
 }
 
-/* Grain overlay */
+/* Grain */
 body::after {
   content: '';
   position: fixed; inset: 0;
@@ -66,38 +66,34 @@ body::after {
 #vignette {
   position: fixed;
   bottom: 0; left: 0; right: 0;
-  height: 280px;
+  height: 300px;
   background: linear-gradient(to top,
     rgba(34,44,51,0.97) 0%,
     rgba(34,44,51,0.75) 35%,
     rgba(34,44,51,0.2)  65%,
-    transparent         100%
-  );
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* Left vignette (softer) */
-#vignette-left {
-  position: fixed;
-  bottom: 0; left: 0; top: 0;
-  width: 200px;
-  background: linear-gradient(to right,
-    rgba(34,44,51,0.6) 0%,
     transparent 100%
   );
   pointer-events: none;
   z-index: 10;
 }
 
-/* ── Identity ────────────────────────────────────────── */
+/* Left vignette */
+#vignette-left {
+  position: fixed;
+  bottom: 0; left: 0; top: 0;
+  width: 200px;
+  background: linear-gradient(to right, rgba(34,44,51,0.6) 0%, transparent 100%);
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* ── Identity ──────────────────────────────────────── */
 #identity {
   position: fixed;
-  bottom: 32px;
-  left: 36px;
+  bottom: 32px; left: 36px;
   z-index: 20;
   opacity: 0;
-  animation: rise 1s cubic-bezier(0.16,1,0.3,1) 0.6s forwards;
+  animation: rise 1s cubic-bezier(0.16,1,0.3,1) 0.5s forwards;
 }
 
 #name-big {
@@ -107,25 +103,24 @@ body::after {
   line-height: 0.86;
   letter-spacing: -0.01em;
   text-transform: uppercase;
-  /* Lava → Vitellary gradient */
-  background: linear-gradient(100deg, var(--lava) 30%, var(--vitellary) 100%);
+  background: linear-gradient(105deg, var(--lava) 55%, #f06030 82%, var(--vitellary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  filter: drop-shadow(0 0 48px rgba(243,60,44,0.25));
+  filter: drop-shadow(0 0 48px rgba(243,60,44,0.3));
 }
 
 #name-sub {
   display: flex;
   align-items: baseline;
   gap: 16px;
-  margin-top: 10px;
+  margin-top: 12px;
   padding-left: 2px;
 }
 
 #name-full {
   font-family: 'JetBrains Mono', monospace;
-  font-size: clamp(11px, 1vw, 15px);
+  font-size: clamp(13px, 1.2vw, 18px);
   font-weight: 300;
   font-style: italic;
   color: var(--n4);
@@ -134,102 +129,99 @@ body::after {
 
 #name-handle {
   font-family: 'JetBrains Mono', monospace;
-  font-size: clamp(9px, 0.8vw, 12px);
+  font-size: clamp(11px, 0.95vw, 14px);
   font-weight: 300;
   color: var(--n3);
   letter-spacing: 0.2em;
 }
 
-/* ── Social links ────────────────────────────────────── */
+/* ── Social links ────────────────────────────────── */
 #links {
   position: fixed;
-  bottom: 36px;
-  right: 40px;
+  bottom: 44px; right: 40px;
   z-index: 20;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: 10px;
   opacity: 0;
-  animation: rise 1s cubic-bezier(0.16,1,0.3,1) 0.9s forwards;
+  animation: rise 1s cubic-bezier(0.16,1,0.3,1) 0.8s forwards;
 }
 
 #links a {
   font-family: 'JetBrains Mono', monospace;
-  font-size: clamp(10px, 0.85vw, 13px);
+  font-size: clamp(12px, 1.05vw, 16px);
   font-weight: 300;
   color: var(--n4);
   text-decoration: none;
   letter-spacing: 0.1em;
   display: flex;
   align-items: center;
-  gap: 0;
-  transition: color 0.2s ease, gap 0.2s ease;
-  position: relative;
+  transition: color 0.2s ease;
 }
 
 #links a .arrow {
   display: inline-block;
-  width: 0;
-  overflow: hidden;
-  opacity: 0;
+  width: 0; overflow: hidden; opacity: 0;
   transition: width 0.2s ease, opacity 0.2s ease;
   font-size: 0.85em;
 }
 
-#links a:hover .arrow { width: 16px; opacity: 0.7; }
+#links a:hover .arrow  { width: 16px; opacity: 0.7; }
+#links a.gh:hover      { color: var(--n5); }
+#links a.li:hover      { color: var(--victoria); }
 
-#links a.gh:hover   { color: var(--n5); }
-#links a.li:hover   { color: var(--victoria); }
-#links a.tw:hover   { color: var(--viridian); }
-#links a.em:hover   { color: var(--vitellary); }
-
-/* ── Generation counter ──────────────────────────────── */
+/* ── Generation counter ──────────────────────────── */
 #gen-counter {
   position: fixed;
-  top: 24px;
-  right: 40px;
+  top: 24px; right: 40px;
   z-index: 20;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 10px;
-  font-weight: 300;
-  color: var(--n3);
-  letter-spacing: 0.25em;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--n5);
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   opacity: 0;
-  animation: rise 1s ease 1.4s forwards;
+  animation: rise 1s ease 1.2s forwards;
   pointer-events: none;
 }
 
-/* ── Info ────────────────────────────────────────────── */
+#gen-counter.milestone-live {
+  animation: milestone-flash 1s ease forwards;
+}
+
+@keyframes milestone-flash {
+  0%   { color: var(--n5); text-shadow: none; }
+  20%  { color: var(--lava); text-shadow: 0 0 10px rgba(243,60,44,1), 0 0 30px rgba(243,60,44,0.5), 0 0 60px rgba(243,60,44,0.2); }
+  100% { color: var(--n5); text-shadow: none; }
+}
+
+/* ── Info ──────────────────────────────────────────── */
 #info {
   position: fixed;
-  bottom: 14px;
-  left: 50%;
+  bottom: 16px; left: 50%;
   transform: translateX(-50%);
   z-index: 20;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 300;
   color: var(--n3);
   letter-spacing: 0.28em;
   text-transform: uppercase;
   white-space: nowrap;
   opacity: 0;
-  animation: rise 1s ease 1.6s forwards;
+  animation: fadeIn 1s ease 1.5s forwards;
   cursor: default;
   transition: color 0.3s;
 }
 #info:hover { color: var(--n4); }
 
-/* ── Animations ──────────────────────────────────────── */
+/* ── Keyframes ─────────────────────────────────────── */
 @keyframes rise {
   from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0);   }
+  to   { opacity: 1; transform: translateY(0); }
 }
-
-/* Override transform for centered #info */
-#info { animation-name: fadeIn; }
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
@@ -254,14 +246,8 @@ body::after {
   <a href="https://github.com/racso" class="gh" target="_blank" rel="noopener">
     <span class="arrow">↗&nbsp;</span>github
   </a>
-  <a href="https://linkedin.com/in/placeholder" class="li" target="_blank" rel="noopener">
+  <a href="https://linkedin.com/in/racso" class="li" target="_blank" rel="noopener">
     <span class="arrow">↗&nbsp;</span>linkedin
-  </a>
-  <a href="https://x.com/placeholder" class="tw" target="_blank" rel="noopener">
-    <span class="arrow">↗&nbsp;</span>x · twitter
-  </a>
-  <a href="mailto:placeholder@rac.so" class="em">
-    <span class="arrow">↗&nbsp;</span>email
   </a>
 </div>
 
@@ -274,8 +260,9 @@ body::after {
   const canvas = document.getElementById('canvas');
   const ctx    = canvas.getContext('2d');
   const genEl  = document.getElementById('gen-val');
+  const genCtr = document.getElementById('gen-counter');
 
-  // ── Palette (RGB arrays) ──────────────────────────────
+  // ── Palette ─────────────────────────────────────────
   const V = {
     void:      [34,  44,  51 ],
     lava:      [243, 60,  44 ],
@@ -287,14 +274,13 @@ body::after {
     vermilion: [204, 41,  54 ],
   };
 
-  // Age → color: cells shift through the full palette as they age
   const AGE_MAP = [
-    [5,   V.lava     ],
-    [14,  V.vitellary],
-    [35,  V.verdigris],
-    [80,  V.viridian ],
-    [180, V.victoria ],
-    [Infinity, V.violet],
+    [5,        V.lava     ],
+    [14,       V.vitellary],
+    [35,       V.verdigris],
+    [80,       V.viridian ],
+    [180,      V.victoria ],
+    [Infinity, V.violet   ],
   ];
 
   function colorForAge(age) {
@@ -302,25 +288,44 @@ body::after {
     return V.violet;
   }
 
-  // ── Config ───────────────────────────────────────────
+  function lerp3(a, b, t) {
+    return [(a[0]+(b[0]-a[0])*t)|0, (a[1]+(b[1]-a[1])*t)|0, (a[2]+(b[2]-a[2])*t)|0];
+  }
+
+  // ── Config ──────────────────────────────────────────
   const CELL       = 8;
   const GAP        = 1;
   const SZ         = CELL - GAP;
   const FPS        = 20;
   const INTERVAL   = 1000 / FPS;
-  const HEAT_DECAY = 1 / (FPS * 1.1);   // death glow ~1.1s
+  const HEAT_DECAY = 1 / (FPS * 1.1);
   const FADE_MUL   = 0.87;
   const RESTART_AT = 1700;
   const THRESH     = 0.005;
-  const CORNER_R   = 1.5;               // cell corner radius
+  const CORNER_R   = 1.5;
+
+  // Zoom config: start zoomed in, pull back to 1× over ZOOM_GENS generations
+  const ZOOM_START = 7;
+  const ZOOM_GENS  = 380;
+  // Brief intro pause (ms) before simulation begins, to show the seed
+  const INTRO_MS   = 1200;
 
   const R_PENT = [[1,0],[2,0],[0,1],[1,1],[1,2]];
 
   let cols, rows, W, H;
   let cells, ages, heat;
   let gen = 0, fading = false, last = 0;
+  let intro = true, introStart = 0;
 
-  // ── Init ──────────────────────────────────────────────
+  // ── Zoom ────────────────────────────────────────────
+  function getScale(g) {
+    if (g >= ZOOM_GENS) return 1;
+    const t    = g / ZOOM_GENS;
+    const ease = 1 - Math.pow(1 - t, 4); // ease-out quartic
+    return ZOOM_START + (1 - ZOOM_START) * ease;
+  }
+
+  // ── Setup ───────────────────────────────────────────
   function resize() {
     W = canvas.width  = window.innerWidth;
     H = canvas.height = window.innerHeight;
@@ -335,7 +340,7 @@ body::after {
 
   function seed() {
     cells.fill(0); ages.fill(0); heat.fill(0);
-    gen = 0; fading = false;
+    gen = 0; fading = false; intro = true; introStart = performance.now();
     const cx = Math.floor(cols / 2) - 1;
     const cy = Math.floor(rows / 2) - 1;
     for (const [dx, dy] of R_PENT) {
@@ -346,7 +351,7 @@ body::after {
     }
   }
 
-  // ── Simulation ────────────────────────────────────────
+  // ── Simulation ──────────────────────────────────────
   function step() {
     const next = new Uint8Array(cols * rows);
     for (let y = 0; y < rows; y++) {
@@ -384,60 +389,117 @@ body::after {
     return anyHot;
   }
 
-  // ── Rendering ─────────────────────────────────────────
-  function lerp3(a, b, t) {
-    return [(a[0]+(b[0]-a[0])*t)|0, (a[1]+(b[1]-a[1])*t)|0, (a[2]+(b[2]-a[2])*t)|0];
-  }
+  // ── Rendering ───────────────────────────────────────
+  function drawCells(scale, glowStrength) {
+    // Grid center in canvas coords (the zoom anchor)
+    const cxGrid = cols / 2 * CELL;
+    const cyGrid = rows / 2 * CELL;
 
-  function draw() {
-    ctx.fillStyle = '#222c33';
-    ctx.fillRect(0, 0, W, H);
+    // Viewport culling: only draw cells visible at current scale
+    const halfW  = (W / 2) / scale;
+    const halfH  = (H / 2) / scale;
+    const minX   = Math.max(0,      Math.floor((cxGrid - halfW) / CELL) - 1);
+    const maxX   = Math.min(cols-1, Math.ceil ((cxGrid + halfW) / CELL) + 1);
+    const minY   = Math.max(0,      Math.floor((cyGrid - halfH) / CELL) - 1);
+    const maxY   = Math.min(rows-1, Math.ceil ((cyGrid + halfH) / CELL) + 1);
 
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < cols; x++) {
-        const i = y*cols+x;
+    ctx.save();
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(scale, scale);
+    ctx.translate(-cxGrid, -cyGrid);
+
+    if (glowStrength > 0) {
+      ctx.shadowColor = `rgba(243,60,44,${glowStrength})`;
+      ctx.shadowBlur  = 16 + 14 * glowStrength;
+    }
+
+    for (let y = minY; y <= maxY; y++) {
+      for (let x = minX; x <= maxX; x++) {
+        const i = y * cols + x;
         const h = heat[i];
         if (h < THRESH) continue;
 
-        let col;
-        if (cells[i]) {
-          col = colorForAge(ages[i]);
-        } else {
-          // Dying: vermilion ember fading to void
-          col = lerp3(V.void, V.vermilion, h * h * 1.4);
-        }
+        const col = cells[i]
+          ? colorForAge(ages[i])
+          : lerp3(V.void, V.vermilion, h * h * 1.4);
 
         ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
-
-        // Rounded-corner cells
-        const px = x*CELL+GAP, py = y*CELL+GAP;
         ctx.beginPath();
-        ctx.roundRect(px, py, SZ, SZ, CORNER_R);
+        ctx.roundRect(x*CELL+GAP, y*CELL+GAP, SZ, SZ, CORNER_R);
         ctx.fill();
       }
     }
+
+    if (glowStrength > 0) ctx.shadowBlur = 0;
+    ctx.restore();
   }
 
-  // ── Loop ─────────────────────────────────────────────
+  function drawSpotlight(scale) {
+    // Soft radial spotlight behind the R-pentomino during early zoom
+    const intensity = Math.max(0, 1 - gen / 60);
+    if (intensity <= 0) return;
+    const cx = W / 2;
+    const cy = H / 2;
+    const r  = 200 * scale;
+    const grd = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+    grd.addColorStop(0, `rgba(243,60,44,${0.07 * intensity})`);
+    grd.addColorStop(1, 'rgba(243,60,44,0)');
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function render(glowOverride) {
+    ctx.fillStyle = '#222c33';
+    ctx.fillRect(0, 0, W, H);
+
+    const scale = intro ? ZOOM_START : getScale(gen);
+
+    // Glow: strong during intro, fades over first 60 gens after that
+    let glow = glowOverride !== undefined
+      ? glowOverride
+      : Math.max(0, 1 - gen / 60);
+
+    drawSpotlight(scale);
+    drawCells(scale, glow);
+  }
+
+  // ── Milestone ───────────────────────────────────────
+  function flashMilestone() {
+    genCtr.classList.remove('milestone-live');
+    void genCtr.offsetWidth; // reflow to restart animation
+    genCtr.classList.add('milestone-live');
+    setTimeout(() => genCtr.classList.remove('milestone-live'), 1000);
+  }
+
+  // ── Loop ────────────────────────────────────────────
   function loop(ts) {
     requestAnimationFrame(loop);
     if (ts - last < INTERVAL) return;
     last = ts;
 
+    if (intro) {
+      // Pulsing glow while paused on the seed
+      const pulse = 0.6 + 0.4 * Math.sin(ts / 380);
+      render(pulse);
+      if (ts - introStart >= INTRO_MS) intro = false;
+      return;
+    }
+
     if (!fading) {
       step();
-      draw();
+      render();
       genEl.textContent = String(gen).padStart(4, '0');
+      if (gen > 0 && gen % 100 === 0) flashMilestone();
       if (gen >= RESTART_AT) fading = true;
     } else {
-      if (fadeStep()) draw();
+      if (fadeStep()) render();
       else seed();
     }
   }
 
-  // ── Events ───────────────────────────────────────────
+  // ── Events ──────────────────────────────────────────
   canvas.addEventListener('click', seed);
-  window.addEventListener('resize', () => { resize(); });
+  window.addEventListener('resize', resize);
 
   resize();
   requestAnimationFrame(loop);
