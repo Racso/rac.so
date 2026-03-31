@@ -192,6 +192,29 @@ body::after {
 /* Milestone glow is driven by JS inline styles + this transition */
 #gen-counter { transition: color 0.7s ease, text-shadow 0.7s ease; }
 
+/* ── FF button ─────────────────────────────────────── */
+#ff-btn {
+  position: fixed;
+  top: 50px; right: 40px;
+  z-index: 20;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--n3);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: rise 1s ease 1.2s forwards;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s, text-shadow 0.2s;
+}
+#ff-btn:hover { color: var(--n4); }
+#ff-btn.active {
+  color: var(--lava);
+  text-shadow: 0 0 8px rgba(243,60,44,0.4);
+}
+
 /* ── Info ──────────────────────────────────────────── */
 #info {
   position: fixed;
@@ -247,6 +270,7 @@ body::after {
 </div>
 
 <div id="gen-counter">gen <span id="gen-val">0000</span></div>
+<div id="ff-btn">×4</div>
 
 <div id="info">r-pentomino · click to restart</div>
 
@@ -256,8 +280,15 @@ body::after {
   const ctx     = canvas.getContext('2d');
   const genEl   = document.getElementById('gen-val');
   const genCtr  = document.getElementById('gen-counter');
+  const ffBtn   = document.getElementById('ff-btn');
   const nameBig = document.getElementById('name-big');
   const favicon = document.getElementById('favicon');
+
+  let ffMode = false;
+  ffBtn.addEventListener('click', () => {
+    ffMode = !ffMode;
+    ffBtn.classList.toggle('active', ffMode);
+  });
 
   // ── Palette ─────────────────────────────────────────
   const V = {
@@ -529,12 +560,15 @@ body::after {
     }
 
     if (!fading) {
-      step();
+      const steps = ffMode ? 4 : 1;
+      for (let s = 0; s < steps; s++) {
+        step();
+        if (gen > 0 && gen % 100 === 0) flashMilestone();
+        if (gen >= RESTART_AT) { fading = true; break; }
+      }
       render();
       genEl.textContent = String(gen).padStart(4, '0');
       updateNameGradient();
-      if (gen > 0 && gen % 100 === 0) flashMilestone();
-      if (gen >= RESTART_AT) fading = true;
     } else {
       if (fadeStep()) render();
       else seed();
