@@ -335,7 +335,7 @@ body::after {
     for (const [dx, dy] of R_PENT) {
       const i = (cy + dy) * cols + (cx + dx);
       if (i >= 0 && i < cells.length) {
-        cells[i] = 1; ages[i] = 1; heat[i] = 1;
+        cells[i] = 1; heat[i] = 1;
       }
     }
   }
