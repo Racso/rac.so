@@ -320,7 +320,7 @@ body::after {
   const ZOOM_START    = 7;
   const ZOOM_GENS     = 380;
   const ZOOM_IN_START  = RESTART_AT - ZOOM_GENS + 50; // starts 50 gens later; duration adapts to still complete at RESTART_AT
-  const ZOOM_IN_TARGET = 1 + (ZOOM_START - 1) * 0.6; // 40% less than full zoom (4.6 instead of 7)
+  const ZOOM_IN_TARGET = 3; // final zoom level (well below ZOOM_START=7)
   // Brief intro pause (ms) before simulation begins, to show the seed
   const INTRO_MS   = 1200;
 
@@ -444,9 +444,7 @@ body::after {
         if (h < THRESH) continue;
 
         const base = globalColor(gen);
-        const col  = cells[i]
-          ? base
-          : lerp3(V.void, base, h * h * 1.2);
+        const col  = lerp3(V.void, base, cells[i] ? h : h * h * 1.2);
 
         ctx.fillStyle = `rgb(${col[0]},${col[1]},${col[2]})`;
         ctx.beginPath();
